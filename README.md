@@ -4,22 +4,21 @@ A NestJS-based backend system for managing doctor appointments with features lik
 
 ## Features
 
-- 👨‍⚕️ Doctor Management
+- 👨‍⚕️ Doctor Management & Slot Availability
 - 📅 Appointment Scheduling
 - 🔐 JWT Authentication
-- 👥 Role-based Access Control
 - 📚 Swagger API Documentation
 - 📄 Pagination & Filtering
 - 🎯 Input Validation
-- 🌱 Database Seeding
+- 🌍 UTC & IST Time Handling
 
 ## Tech Stack
 
-- NestJS
-- PostgreSQL
-- TypeORM
+- NestJS (TypeScript)
+- PostgreSQL with TypeORM
 - JWT Authentication
 - Swagger/OpenAPI
+- Class Validator & Transformer
 
 ## Prerequisites
 
@@ -27,46 +26,43 @@ A NestJS-based backend system for managing doctor appointments with features lik
 - PostgreSQL
 - npm/yarn
 
-## Setup Instructions
+## Installation & Setup
 
-1. **Clone the repository**
+1. **Clone and Install Dependencies**
    ```bash
    git clone <repository-url>
    cd doctor-appointment-booking
-   ```
-
-2. **Install dependencies**
-   ```bash
    npm install
    ```
 
-3. **Environment Setup**
+2. **Environment Setup**
    
    Create a `.env` file in the root directory:
    ```env
+   # Database Configuration
    DB_HOST=localhost
    DB_PORT=5432
    DB_USERNAME=postgres
    DB_PASSWORD=postgres
    DB_DATABASE=doctor_appointment_db
+
+   # JWT Configuration
    JWT_SECRET=your-secret-key
+
+   # Optional
+   PORT=3000
    ```
 
-4. **Database Setup**
+3. **Database Setup**
    ```bash
    # Create PostgreSQL database
    createdb doctor_appointment_db
    
-   # Run the application (this will create tables due to synchronize: true)
+   # Start the application (tables will be auto-created)
    npm run start:dev
    
-   # Seed the database with initial data
+   # Seed initial data (optional)
    npm run seed
-   ```
-
-5. **Start the Application**
-   ```bash
-   npm run start:dev
    ```
 
 ## API Documentation
@@ -76,42 +72,77 @@ Once the application is running, access the Swagger documentation at:
 http://localhost:3000/api
 ```
 
-## API Endpoints
+### Core Endpoints
 
-### Auth
-- POST `/auth/register` - Register new user
-- POST `/auth/login` - User login
+#### Authentication
+- `POST /auth/register` - Register new user
+- `POST /auth/login` - User login (returns JWT token)
 
-### Doctors
-- GET `/doctors` - List all doctors (with pagination & filtering)
-- GET `/doctors/:id` - Get doctor details
-- POST `/doctors` - Add new doctor
-- GET `/doctors/:id/available-slots` - Get available slots for a doctor
+#### Doctors
+- `GET /doctors` - List all doctors (with pagination & filtering)
+  - Query params: `page`, `limit`, `specialization`
+- `GET /doctors/:id/available-slots` - Get available slots for a doctor
+  - Query params: `date` (YYYY-MM-DD)
+  - Returns both UTC and IST times
 
-### Appointments
-- POST `/appointments` - Book an appointment
-- GET `/appointments` - List all appointments
-- GET `/appointments/:id` - Get appointment details
-- PATCH `/appointments/:id/cancel` - Cancel an appointment
+#### Appointments
+- `POST /appointments` - Book an appointment (requires authentication)
+  - Validates slot availability
+  - Prevents double booking
+  - Handles timezone conversion
 
-## Default Users
+### Time Slots Format
 
-After running the seed script, you can use:
+Available slots are returned in both UTC and IST:
+```json
+[
+  {
+    "utc": "2024-03-20T03:30:00.000Z",
+    "ist": "2024-03-20T09:00:00.000Z"
+  }
+]
 ```
-Admin User:
-Email: admin@example.com
-Password: admin123
-```
 
-## Testing
+## Business Rules
+
+- ✅ No double-booking for doctors
+- ✅ No overlapping appointments
+- ✅ Working hours validation (9:00 AM to 5:00 PM IST)
+- ✅ Proper timezone handling (UTC ↔ IST)
+- ✅ 30-minute slot duration
+- ✅ Authentication required for booking
+
+## Development
 
 ```bash
-# unit tests
+# Development mode
+npm run start:dev
+
+# Production build
+npm run build
+npm run start:prod
+
+# Run tests
 npm run test
-
-# e2e tests
-npm run test:e2e
-
-# test coverage
-npm run test:cov
 ```
+
+## Error Handling
+
+The API includes comprehensive error handling for:
+- Invalid time slots
+- Double bookings
+- Authentication failures
+- Resource not found
+- Validation errors
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+[MIT Licensed](LICENSE)
